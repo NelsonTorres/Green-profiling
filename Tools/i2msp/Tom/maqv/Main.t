@@ -19,7 +19,10 @@ public class Main {
 	%include{../genMaqV/maqv/msp/msp.tom}
 
 	private Instrucoes programa;
+	private Instrucoes original;
 	private Stackk stack;
+	private Stackk stackFuncs;
+	private String actualFuncName;
 	private Map<String,Integer> symbols;
 	private ArrayList<Termo> heap;
 	private int pc;
@@ -35,8 +38,9 @@ public class Main {
 			Tree b = (Tree) parser.programa().getTree();
 			//System.out.println("Result = " + mspAdaptor.getTerm(b)); // name of the Gom module + Adaptor
 			Instrucoes p = (Instrucoes) mspAdaptor.getTerm(b);
+			Instrucoes original = (Instrucoes) mspAdaptor.getTerm(b);
 
-			Main main = new Main(p);
+			Main main = new Main(p, original);
 
 			main.run(p);
 
@@ -69,9 +73,12 @@ public class Main {
 		}
 	}
 
-	public Main(Instrucoes insts) {
+	public Main(Instrucoes insts, Instrucoes orig) {
 		programa = insts;
+		original = orig;
+		actualFuncName = "";
 		stack = `Stackk();
+		stackFuncs = `Stackk();
 		heap = new ArrayList<Termo>();
 		symbols = new HashMap<String, Integer>();
 		pc = 0;
@@ -93,18 +100,60 @@ public class Main {
 			}
 		}
 		return `Instrucoes();
-	} 
+	}
+
+	private Instrucoes getCalledFunction(Instrucoes prog, String called){
+		%match (prog){
+			Instrucoes(Call(id),insts*) -> {
+				if(called.equals(`id)){
+					return `insts;
+				}else{
+					return `getCalledFunction(insts*,called);
+				}
+			}
+			Instrucoes(_,insts*) -> { return `getCalledFunction(insts*,called); }
+		}
+		return `Instrucoes();
+	}
+
+	private Instrucoes getNInstr(Instrucoes prog, String callerF, String called){
+		%match (prog){
+			Instrucoes(ALabel(id),insts*) -> {
+				if(callerF.equals(`id)){
+					return getCalledFunction(`insts, called);
+				}else{
+					return `getNInstr(insts*,callerF,called);
+				}
+			}
+			Instrucoes(_,insts*) -> { return `getNInstr(insts*,callerF,called); }
+		}
+		return `Instrucoes();
+	}
 
 	private Instrucoes jmp(Instrucoes prog, String label){
 		%match (prog){
-			Instrucoes(ALabel(l),insts*) -> { 
-				if (label.equals(`l)) { return `insts*; }
-				else { return `jmp(insts*,label); }
+			Instrucoes(ALabel(l),insts*) -> {
+				if (label.equals(`l)) {
+					if(`l.startsWith("f:")){
+						actualFuncName = `l;
+					}
+					return `insts*; 
+				}else{
+					return `jmp(insts*,label);
+				}
 			}
 			Instrucoes(_,insts*) -> { return `jmp(insts*,label); }
 		}
 		return `Instrucoes();
-	} 
+	}
+
+	private void pushFuncs(Termo termo){
+		%match (stackFuncs){
+			Stackk(termos*) -> {
+				this.stackFuncs = `Stackk(termo,termos*);
+			} 
+		}
+	}
 
 	private void pushStack(Termo termo){
 		%match (stack){
@@ -112,10 +161,25 @@ public class Main {
 		}
 	}
 
+	private void popFuncs(){
+		%match (stackFuncs){
+			Stackk(termo1,termos*) -> {
+				this.stackFuncs = `Stackk(termos*);
+			}
+		}
+	}
+
 	private void popStack(){
 		%match (stack){
 			Stackk(termo1,termos*) -> { this.stack = `Stackk(termos*); }
 		}
+	}
+
+	private Termo topFuncs(){
+		%match(stackFuncs){
+			Stackk(termo,termos*) -> { return `termo; }
+		}
+		return `Vazio();
 	}
 
 	private Termo topStack() {
@@ -149,24 +213,43 @@ public class Main {
 
 	public String run(Instrucoes prog) {
 		pc++;
+		Instrucoes orig = this.original;
 		%match (prog){
 			Instrucoes(inst,instrs*) -> {
 				%match(inst) {
-					ALabel(id) -> { return `run(instrs*); }
+					ALabel(id) -> {
+						if(`id.startsWith("f:")){
+							actualFuncName=`id;
+						}
+						return `run(instrs*);
+					}
 					Call(id) -> {
-						`pushStack(I(pc));
-						prog = `jmp(prog,id);
+						`pushFuncs(S(actualFuncName));
+						`pushFuncs(S(id));
+						prog = `jmp(orig,id);
 						return `run(prog);
 					}
-					Ret() -> { 
-						Termo progCount = `topStack(); 
-						`popStack();
-						%match(progCount) {
+					Ret() -> {
+						Termo calledLabel = `topFuncs(); 
+						`popFuncs();
+						Termo callerFLabel = `topFuncs();
+						`popFuncs();
+						String called = "", callerF = "";
+						%match(calledLabel) {
+							S(id) -> {
+								called = `id;
+							}
 							I(valor) -> { 
 								pc = `valor;
-								prog = `getNInstr(programa,valor);
+								prog = `getNInstr(orig,valor);
+							}
+						}%match(callerFLabel) {
+							S(id) -> {
+								actualFuncName = `id;
+								callerF = `id;
 							}
 						}
+						prog = `getNInstr(orig,callerF,called);
 						return `run(prog);
 					}
 					Add() -> {
@@ -405,16 +488,16 @@ public class Main {
 						Termo t = `topStack();
 						`popStack();
 						%match(t) {
-							I(v1) -> { output.append(`v1); }
-							S(v1) -> { output.append(`v1); }
-							F(v1) -> { output.append(`v1); }
-							B(True()) -> { output.append("True"); }
-							B(False()) -> { output.append("False"); }
+							I(v1) -> { output.append(`v1+"\n"); }
+							S(v1) -> { output.append(`v1+"\n"); }
+							F(v1) -> { output.append(`v1+"\n"); }
+							B(True()) -> { output.append("True"+"\n"); }
+							B(False()) -> { output.append("False"+"\n"); }
 						}
 						return `run(instrs*);
 					}
 					Jump(id) -> {
-						prog = `jmp(prog,id);
+						prog = `jmp(orig,id);
 						return `run(prog);
 					}
 					Jumpf(id) -> {
@@ -423,7 +506,7 @@ public class Main {
 						%match(t) {
 							B(True()) -> { return `run(instrs*); }
 							B(False()) -> { 
-								prog = `jmp(prog,id);
+								prog = `jmp(orig,id);
 								return `run(prog);
 							}
 						}

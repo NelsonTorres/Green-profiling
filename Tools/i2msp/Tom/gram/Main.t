@@ -41,9 +41,9 @@ public class Main {
 			try {
 				ArrayList<Integer> numInstrucao = new ArrayList<Integer>();
 				numInstrucao.add(1);
-//				Instrucao p1 = `TopDown(stratFaultInjection()).visit(p);
 				`TopDown(CollectFuncsSignature(main.functionSignatures)).visit(p);
-				Instrucao p2 = `BottomUp(stratPrintAnnotations(numInstrucao)).visit(p);
+				//Instrucao p2 = `BottomUp(stratPrintAnnotations(numInstrucao)).visit(p);
+				Instrucao p2 = p;
 				int numInst = numInstrucao.get(0)-1;
 				LComentarios c = `Vazio();
 				Expressao numInstExps = `Expressoes(Print(c,c,c,Int(numInst),c,c),Print(c,c,c,Char("#"),c,c));
@@ -317,7 +317,8 @@ public class Main {
 	private String compileAnnot(Instrucao inst) {
 		NumToInt numInstrucao = new NumToInt(1);
 		String toReturn = compileAnnotInstrucao(inst, numInstrucao);
-		return toReturn.concat("Halt");
+		//return toReturn.concat("Halt");
+		return toReturn.substring(0,toReturn.length()-1);
 	}
 	
 	private String compileAnnotInstrucao(Instrucao i, NumToInt numInstrucao) {
@@ -360,7 +361,7 @@ public class Main {
 				String genInst = `compileAnnotInstrucao(inst, numInstrucao);
 				int num = numInstrucao.inc();
 
-				return genCondicao + "Jumpf \"fenq" + num + "\"," + genInst + "ALabel \"fenq" + num + "\",";
+				return "ALabel \"enq" + num + "\"," + genCondicao + "Jumpf \"fenq" + num + "\"," + genInst + "Jump \"enq" + num +"\"," + "ALabel \"fenq" + num + "\",";
 			}
 
 			For(_,_,decl,_,condicao,_,_,exp,_,_,inst,_) -> {
@@ -369,9 +370,15 @@ public class Main {
 				String genExp = `compileAnnotExpressoes(exp, numInstrucao);
 				String genInst = `compileAnnotInstrucao(inst, numInstrucao);
 
+				int num = numInstrucao.inc();
+				String labelInit = "ALabel \"for" + num + "\",";
+				String jump = "Jumpf \"ffor"+ num + "\",";
+				String labelJump = "ALabel \"ffor" + num + "\",";
+				String labelEnd = "Jump \"for" + num + "\",";
+
 				functionsDeclarations.append(genDecl);
 
-				return genCondicao.concat(genExp).concat(genInst);
+				return labelInit.concat(genCondicao).concat(jump).concat(genInst).concat(genExp).concat(labelEnd).concat(labelJump);
 			}
 
 			Return(_,_,exp,_) -> {
@@ -394,7 +401,7 @@ public class Main {
 				String functionRet = "";
 				%match(tipo) {
 					DVoid() -> { if (!actualFunctionName.equals("main")) functionRet = "Ret,"; }
-					_ -> { functionRet = ""; }
+					_ -> { if(!actualFunctionName.equals("main")) functionRet = "Ret,"; }
 				}
 				String halt = actualFunctionName.equals("main") ? "Halt," : "";
 				String genArgs = `compileArguments(nome, argumentos);
@@ -537,8 +544,8 @@ public class Main {
 					prefix = actualFunctionName + "_";
 					
 				%match(opInc) {
-					Inc() -> { return "Pusha \"" + prefix + `id + "\",Inc,Pusha \"" + prefix + `id + "\",Load,"; } 
-					Dec() -> { return "Pusha \"" + prefix + `id + "\",Dec,Pusha \"" + prefix + `id + "\",Load,"; }
+					Inc() -> { return "Pusha \"" + prefix + `id + "\",Inc"; } 
+					Dec() -> { return "Pusha \"" + prefix + `id + "\",Dec"; }
 				}
 				return `id;
 			}
@@ -551,8 +558,8 @@ public class Main {
 					prefix = actualFunctionName + "_";
 					
 				%match(opInc) {
-					Inc() -> { return "Pusha \"" + prefix + `id + "\",Load,Pusha \"" + prefix + `id + "\",Inc,"; } 
-					Dec() -> { return "Pusha \"" + prefix + `id + "\",Load,Pusha \"" + prefix + `id + "\",Dec,"; }
+					Inc() -> { return "Pusha \"" + prefix + `id + "\",Inc,"; } 
+					Dec() -> { return "Pusha \"" + prefix + `id + "\",Dec,"; }
 				}
 				return `id;
 			}
