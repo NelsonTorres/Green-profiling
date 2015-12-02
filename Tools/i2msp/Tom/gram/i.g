@@ -35,13 +35,13 @@ declaracao :
 	;
 
 dec_nodo :
-	( ID c1=comentarios -> ^(Decl ID ^(Comentarios $c1?) ^(Comentarios) Empty ^(Comentarios) )
+	( ID c1=comentarios -> ^(Decl ID ^(Comentarios $c1?) ^(Comentarios) Empty ^(Comentarios))
 	| ID c1=comentarios '=' c2=comentarios condicao c3=comentarios -> ^(Decl ID ^(Comentarios $c1?) ^(Comentarios $c2?) condicao ^(Comentarios $c3?)) 
 	)
 	;
 	
 funcao :	
-	c1=comentarios idTipo c2=comentarios ID c3=comentarios '(' c4=comentarios argumentos? c5=comentarios ')' c6=comentarios blocoCodigo c7=comentarios -> ^(Funcao ^(Comentarios $c1?) idTipo ^(Comentarios $c2?) ID ^(Comentarios $c3?) ^(Comentarios $c4?) ^(ListaArgumentos argumentos?) ^(Comentarios $c5?) ^(Comentarios $c6?) blocoCodigo ^(Comentarios $c7?))
+	c1=comentarios idTipo c2=comentarios ID c3=comentarios '(' c4=comentarios argumentos? c5=comentarios ')' c6=comentarios blocoCodigo c7=comentarios -> ^(Funcao ^(Comentarios $c1?) idTipo ^(Comentarios $c2?) ID ^(Comentarios $c3?) ^(Comentarios $c4?) ^(ListaArgumentos argumentos?) ^(Comentarios $c5?) ^(Comentarios $c6?) blocoCodigo ^(Comentarios $c7?)  )
 	;
 	
 argumentos :
@@ -55,7 +55,7 @@ argumento :
 // instrucoes
 	
 instrucao :	
-	(if_ -> if_ | for_ -> for_ | while_ -> while_ | return_ ';' -> return_ | call ';' -> ^(Exp call) | print_ ';' -> print_)
+	(if_ -> if_ | for_ -> for_ | while_ -> while_ | return_ ';' -> return_ | call ';' -> ^(Exp call) | print_ ';' -> print_ | energia_ ';' -> energia_)
 	;
 
 if_ 	:
@@ -93,7 +93,11 @@ call	:
 print_	:
 	c1=comentarios 'print' c2=comentarios '(' c3=comentarios expressao c4=comentarios ')' c5=comentarios -> ^(Exp ^(Print ^(Comentarios $c1?) ^(Comentarios $c2?) ^(Comentarios $c3?) expressao ^(Comentarios $c4?) ^(Comentarios $c5?)))
 	;
-	
+
+energia_ : 
+	c1=comentarios 'energia' c2=comentarios '(' c3=comentarios ')' c4=comentarios -> ^(Exp ^(DEnergia ^(Comentarios $c1?) ^(Comentarios $c2?) ^(Comentarios $c3?) ^(Comentarios $c4?)))
+	;
+		
 input_	:
 	c1=comentarios 'input' c2=comentarios '(' c3=comentarios idTipo c4=comentarios ')' c5=comentarios -> ^(Input ^(Comentarios $c1?) ^(Comentarios $c2?) ^(Comentarios $c3?) idTipo ^(Comentarios $c4?) ^(Comentarios $c5?))
 	;
@@ -150,6 +154,7 @@ condicao_igualdade :
 								)*
 	;
 	
+
 // expressao de atribuicao
 	
 atribuicao :

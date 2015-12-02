@@ -20,6 +20,7 @@ instrucao
 	//
 	|	'Call' STRING -> ^(Call STRING)		//call function
 	|	'Ret' -> ^(Ret)			//return function
+	|	'Energy' -> ^(Energy)	
 	//
 	|	'Add' -> ^(Add)			//arithmetic and boolean instructions
 	| 	'Sub' -> ^(Sub)
@@ -55,7 +56,6 @@ instrucao
 	|	'Store' -> ^(Store)
 	|	'Decl' STRING INT INT -> ^(Decl STRING INT INT )
 	;
-	
 /*
 valor
 	:	FLOAT -> ^(F FLOAT)

@@ -1,11 +1,13 @@
 void main() {
+
+    energia();
     int a;
     int b;
     int res;
     a = input(int);
     b = input(int);
     res = max(a,b);
-    print(';');
+    print('=');
     print(res);
 }
 

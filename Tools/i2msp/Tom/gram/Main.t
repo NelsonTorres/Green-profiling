@@ -13,6 +13,7 @@ import java.io.*;
 
 
 public class Main {
+
 	%include{sl.tom}
 	%include{util/HashMap.tom}
 	%include{util/ArrayList.tom}
@@ -25,6 +26,7 @@ public class Main {
 	private boolean callReturnNeeded;
 	private int memAdress;
 	StringBuilder functionsDeclarations;
+
 
 	public static void main(String[] args) {
 		try {
@@ -491,6 +493,9 @@ public class Main {
 		}
 		return "";
 	}
+	private void printa(String str){
+		System.out.println(str);
+	}
 
 	private String compileAnnotExpressoes(Expressao e, NumToInt numInstrucao) {
 		%match(e) {
@@ -535,7 +540,6 @@ public class Main {
 					String call = "Call \"" + prefix + `id + "\",";
 					return genCallParameters + call + loadReturn;
 			 }
-
 			IncAntes(opInc,id) -> { 
 				String prefix;
 				if (actualFunctionName.equals(""))
@@ -631,12 +635,13 @@ public class Main {
 
 				return exps;
 			}
-
+			DEnergia(_,_,_,_) -> {
+				return "Energy,";
+			}
 			Empty() -> { return ""; }
 		}
 		return "";
 	}
-
 	private String compileCallParameters(String functionName, Argumentos argumentos, Parametros parametros, NumToInt numInstrucao) {
 		%match (parametros, argumentos){
 			ListaParametros(param1,tailParam*), ListaArgumentos(arg1,tailArg*) -> {

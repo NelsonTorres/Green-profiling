@@ -10,7 +10,15 @@ import tom.library.sl.*;
 import java.util.*;
 import java.lang.*;
 import java.io.*;
-
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class Main {
 	%include{sl.tom}
@@ -29,14 +37,20 @@ public class Main {
 	private int numProg;
 	private StringBuilder output;
 
-	public static void main(String[] args) {
+
+
+	public static void main(String[] args) throws IOException{
+		
+
+
 		try {
+			
 			mspLexer lexer = new mspLexer(new ANTLRInputStream(new FileInputStream(args[0])));
 			CommonTokenStream tokens = new CommonTokenStream(lexer);
 			mspParser parser = new mspParser(tokens);
 			// Parse the input expression
 			Tree b = (Tree) parser.programa().getTree();
-			//System.out.println("Result = " + mspAdaptor.getTerm(b)); // name of the Gom module + Adaptor
+			/*System.out.println("Result = " + mspAdaptor.getTerm(b));*/ // name of the Gom module + Adaptor
 			Instrucoes p = (Instrucoes) mspAdaptor.getTerm(b);
 			Instrucoes original = (Instrucoes) mspAdaptor.getTerm(b);
 
@@ -211,7 +225,57 @@ public class Main {
 		heap.set(memAddress,value);
 	}
 
-	public String run(Instrucoes prog) {
+	private void printa(String str){
+		System.out.println(str);
+	}
+
+	public void getEnergia() throws IOException{
+
+		try{	
+
+			final Process x = Runtime.getRuntime().exec("sudo java EnergyExample");
+
+			new Thread(new Runnable() {
+    			public void run() {
+
+    					DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+                        Calendar cal = Calendar.getInstance();
+	  					//out.println(dateFormat.format(cal.getTime()));
+	  					String hora= dateFormat.format(cal.getTime());
+
+
+    					PrintWriter out = null;
+     						try {
+           						 out = new PrintWriter(new FileWriter("../logs/energy_"+hora+".log"));
+                                 BufferedReader input = new BufferedReader(new InputStreamReader(x.getInputStream()));
+                                 String line = null;
+                                        try {
+                                           
+                                                         	 
+                                                while ((line = input.readLine()) != null)
+                                                       out.println(line);
+                                                        out.close();
+                                              
+                                                  } catch (IOException e) {
+                                                    }
+     							} catch (IOException ex) {
+                                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+     						} finally {
+                                    out.close();
+                                }
+    					}
+					}).start();
+
+				x.waitFor();
+			} catch(InterruptedException e) {}
+		}
+
+
+
+		
+
+
+	public String run(Instrucoes prog) throws IOException{
 		pc++;
 		Instrucoes orig = this.original;
 		%match (prog){
@@ -229,6 +293,14 @@ public class Main {
 						prog = `jmp(orig,id);
 						return `run(prog);
 					}
+					Energy()->{
+						System.out.println("-> getEnergy <- consulte em logs o resultado");
+						getEnergia();
+						return `run(instrs*);
+						  				
+					}
+
+
 					Ret() -> {
 						Termo calledLabel = `topFuncs(); 
 						`popFuncs();

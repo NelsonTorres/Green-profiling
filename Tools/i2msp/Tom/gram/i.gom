@@ -27,8 +27,11 @@ Expressao = ExpNum(Exp1:Expressao,c1:LComentarios,op:OpNum,c2:LComentarios,Exp2:
 	| Comp(Exp1:Expressao,c1:LComentarios,OpComp:OpComp,c2:LComentarios,Exp2:Expressao)
 	| Input(c1:LComentarios,c2:LComentarios,c3:LComentarios,Tipo:DefTipo,c4:LComentarios,c5:LComentarios)
 	| Print(c1:LComentarios,c2:LComentarios,c3:LComentarios,Expressao:Expressao,c4:LComentarios,c5:LComentarios)
+	| DEnergia(c1:LComentarios,c2:LComentarios,c3:LComentarios,c4:LComentarios)
 	| Expressoes(Expressao*)
 	| Empty()
+	
+
 
 DefTipo = DInt() | DChar() | DBoolean() | DFloat() | DVoid()
 
