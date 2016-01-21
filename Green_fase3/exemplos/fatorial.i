@@ -1,0 +1,34 @@
+void main() {
+	int num;
+	num = 1;
+	int resI; int resR;
+	
+	energia();
+	resI = fatorialI(num);
+	energia();
+	
+	print(resI);
+
+}
+
+int fatorialI(int num){
+	int fat;
+	for(fat = 1; num > 1; num--){
+		fat = fat * num;
+	}
+	return fat;
+}
+
+int fatorialR(int num){
+
+	resR = fatorialR(num);
+	energia();
+	print(resR);
+
+
+	if (num==1 || num==0){
+		return 1;
+	}else{
+		return num*fatorialR(num-1);
+	}
+}
